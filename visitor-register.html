@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wiwynn 訪客登記 - Solar System Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Three.js Importmap -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <style>
+        :root {
+            --primary-color: #00f2ff;
+            --primary-gradient: linear-gradient(135deg, #00f2ff 0%, #0066ff 100%);
+            --bg-gradient: linear-gradient(135deg, #050510 0%, #101025 100%);
+            --glass-bg: rgba(10, 20, 40, 0);
+            --glass-border: rgba(0, 242, 255, 0.3);
+            --text-color: #e0f7ff;
+            --text-muted: #8aa;
+            --error-color: #ff3366;
+            --success-color: #00ff99;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', 'Microsoft JhengHei', sans-serif;
+            background: #000;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overscroll-behavior: none;
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: radial-gradient(circle at center, #1a1a3a 0%, #000 100%);
+            opacity: 0.7;
+            cursor: grab;
+        }
+
+        #canvas-container.grabbing {
+            cursor: grabbing;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--glass-bg);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.15);
+            animation: slideUp 0.6s ease-out;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 280px;
+            height: auto;
+            filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.3));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .admin-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 12px 24px;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .admin-btn:hover {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .form-section:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .form-section:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .form-section:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .form-section:nth-child(4) {
+            animation-delay: 0.5s;
+        }
+
+        .form-section:nth-child(5) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 0 5px rgba(0, 242, 255, 0.3);
+        }
+
+        .section-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 24px;
+            background: var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 16px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: rgba(0, 242, 255, 0.05);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+
+        .photo-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .photo-preview {
+            aspect-ratio: 3/4;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px dashed var(--glass-border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-family: inherit;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        }
+
+        .signature-pad {
+            width: 100%;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        .employee-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            margin-top: 10px;
+        }
+
+        .employee-item {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .employee-item:last-child {
+            border-bottom: none;
+        }
+
+        .employee-item:hover {
+            background: rgba(0, 242, 255, 0.1);
+        }
+
+        .employee-item.selected {
+            background: rgba(0, 242, 255, 0.2);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        /* Rules Section */
+        .rules-container {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .rules-content {
+            height: 150px;
+            overflow-y: auto;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            padding-right: 10px;
+        }
+
+        .rules-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .rules-content::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 3px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .checkbox-input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+        }
+
+        .error-msg {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: none;
+            text-shadow: 0 0 5px rgba(255, 51, 102, 0.3);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #101025;
+            border: 1px solid var(--primary-color);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: transparent;
+            border: 2px solid var(--success-color);
+            color: var(--success-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            box-shadow: 0 0 15px rgba(0, 255, 153, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px;
+            }
+
+            .photo-area {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .logo-container img {
+                max-width: 200px;
+            }
+
+            .admin-btn {
+                position: static;
+                margin: 0 auto 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="container">
+        <div class="header">
+            <a href="/dashboard" class="admin-btn">
+                <span>🔐</span>
+                <span>後台管理</span>
+            </a>
+            <div class="logo-container">
+                <img src="Wiwynn_LOGO_with Chinese_Name_Blue_Green (2).png" alt="Wiwynn Logo">
+            </div>
+            <h1>訪客登記系統</h1>
+        </div>
+
+        <form id="visitorForm">
+            <!-- 1. Basic Info -->
+            <div class="form-section">
+                <div class="section-title">基本資料</div>
+                <div class="form-group">
+                    <label class="form-label">訪客姓名</label>
+                    <input type="text" id="visitorName" class="form-input" placeholder="請輸入您的姓名" required>
+                    <div class="error-msg" id="nameError">此欄位為必填</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">公司名稱</label>
+                    <input type="text" id="company" class="form-input" placeholder="請輸入您的公司名稱" required>
+                    <div class="error-msg" id="companyError">此欄位為必填</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">聯絡電話</label>
+                    <input type="tel" id="phone" class="form-input" placeholder="請輸入手機號碼" required>
+                    <div class="error-msg" id="phoneError">此欄位為必填</div>
+                </div>
+            </div>
+
+            <!-- 2. Photo -->
+            <div class="form-section">
+                <div class="section-title">照片拍攝</div>
+                <div class="photo-area">
+                    <div class="photo-preview" id="photoPreview">
+                        <div class="photo-placeholder">
+                            <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
+                            <div>尚未拍攝</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 15px; justify-content: center;">
+                        <label class="btn btn-primary">
+                            開啟相機
+                            <input type="file" id="cameraInput" accept="image/*" capture="environment"
+                                style="display: none;">
+                        </label>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+                            請拍攝清晰正面照片<br>用於製作訪客證
+                        </p>
+                    </div>
+                </div>
+                <div class="error-msg" id="photoError">請拍攝照片</div>
+            </div>
+
+            <!-- 3. Host Search -->
+            <div class="form-section">
+                <div class="section-title">拜訪對象</div>
+                <input type="text" id="employeeSearch" class="form-input" placeholder="搜尋員工姓名或部門...">
+                <div id="selectedCount"
+                    style="margin-top: 10px; color: var(--primary-color); font-weight: 600; display: none;">
+                    已選擇 <span id="countNum">0</span> 位員工
+                </div>
+                <div class="employee-list" id="employeeList">
+                    <!-- JS Injected -->
+                </div>
+                <div class="error-msg" id="employeeError">請至少選擇一位拜訪對象</div>
+            </div>
+
+            <!-- 4. Signature -->
+            <div class="form-section">
+                <div class="section-title">電子簽名</div>
+                <div style="position: relative;">
+                    <canvas id="signaturePad" class="signature-pad"></canvas>
+                    <button type="button" id="clearSignature"
+                        style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">清除</button>
+                </div>
+                <div class="error-msg" id="signatureError">請完成簽名</div>
+            </div>
+
+            <!-- 5. Rules & Submit -->
+            <div class="form-section">
+                <div class="section-title">訪客規章</div>
+                <div class="rules-container">
+                    <div class="rules-content">
+                        <h3>緯穎科技訪客安全與保密規章</h3>
+                        <p>1. 訪客進入本公司區域，應遵守本公司之安全管理規定。</p>
+                        <p>2. 未經許可，不得在公司區域內拍照、錄影或錄音。</p>
+                        <p>3. 訪客不得攜帶違禁品、危險物品或未經授權之資訊設備進入。</p>
+                        <p>4. 訪客應配戴訪客證，並由接待人員陪同。</p>
+                        <p>5. 訪客所知悉之本公司機密資訊（包括但不限於技術、商業、人事等），負有保密義務，不得洩漏予第三人。</p>
+                        <p>6. 違反上述規定者，本公司有權拒絕其進入或要求其離開，並保留法律追訴權。</p>
+                    </div>
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="ruleAgree" class="checkbox-input">
+                        <span style="font-size: 0.95rem;">我已詳細閱讀並同意上述訪客規章</span>
+                    </label>
+                </div>
+                <div class="error-msg" id="ruleError" style="margin-bottom: 20px;">請勾選同意訪客規章</div>
+
+                <button type="submit" class="btn btn-primary" style="font-size: 1.1rem; padding: 20px;">
+                    完成登記
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="success-icon">✓</div>
+            <h2 style="color: #fff; margin-bottom: 10px;">登記成功</h2>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">系統已通知受訪者，請稍候。</p>
+            <button class="btn btn-primary" onclick="location.reload()">關閉</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // ========== Solar System Background ==========
+        let scene, camera, renderer;
+        let particles, sun, planets = [];
+        const mouse = new THREE.Vector2();
+        const targetRotation = new THREE.Vector2();
+
+        // Planet data
+        const planetData = [
+            {
+                name: 'Mercury',
+                size: 0.4,
+                orbit: 6,
+                speed: 4.74,
+                texture: 'person-main/textures/2k_mercury.jpg',
+                color: '#8C7853'
+            },
+            {
+                name: 'Venus',
+                size: 0.8,
+                orbit: 9,
+                speed: 3.50,
+                texture: 'person-main/textures/2k_venus_surface.jpg',
+                color: '#FFC649'
+            },
+            {
+                name: 'Earth',
+                size: 0.9,
+                orbit: 12,
+                speed: 2.98,
+                texture: 'person-main/textures/2k_earth_daymap.jpg',
+                color: '#4A90E2'
+            },
+            {
+                name: 'Mars',
+                size: 0.5,
+                orbit: 15,
+                speed: 2.41,
+                texture: 'person-main/textures/2k_mars.jpg',
+                color: '#E27B58'
+            },
+            {
+                name: 'Jupiter',
+                size: 2.0,
+                orbit: 22,
+                speed: 1.31,
+                texture: 'person-main/textures/2k_jupiter.jpg',
+                color: '#C88B3A'
+            },
+            {
+                name: 'Saturn',
+                size: 1.8,
+                orbit: 28,
+                speed: 0.97,
+                texture: 'person-main/textures/2k_saturn.jpg',
+                ring: {
+                    texture: 'person-main/textures/2k_saturn_ring_alpha.png'
+                },
+                color: '#FAD5A5'
+            },
+            {
+                name: 'Uranus',
+                size: 1.2,
+                orbit: 34,
+                speed: 0.68,
+                texture: 'person-main/textures/2k_uranus.jpg',
+                color: '#4FD0E7'
+            },
+            {
+                name: 'Neptune',
+                size: 1.2,
+                orbit: 39,
+                speed: 0.54,
+                texture: 'person-main/textures/2k_neptune.jpg',
+                color: '#4166F5'
+            },
+            {
+                name: 'Pluto',
+                size: 0.3,
+                orbit: 44,
+                speed: 0.47,
+                texture: 'person-main/textures/2k_moon.jpg',
+                color: '#A0826D'
+            }
+        ];
+
+        init();
+        animate();
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 45;
+            camera.position.y = 15;
+
+            renderer = new THREE.WebGLRenderer({
+                alpha: true,
+                antialias: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight('#ffffff', 0.1);
+            scene.add(ambientLight);
+
+            // Sun light
+            const sunLight = new THREE.PointLight('#ffffff', 60, 0, 1.0);
+            sunLight.position.set(0, 0, 0);
+            sunLight.castShadow = true;
+            scene.add(sunLight);
+
+            // Background stars
+            const starCount = 3000;
+            const positions = new Float32Array(starCount * 3);
+            const colors = new Float32Array(starCount * 3);
+            const sizes = new Float32Array(starCount);
+
+            for (let i = 0; i < starCount; i++) {
+                const i3 = i * 3;
+                positions[i3] = (Math.random() - 0.5) * 150;
+                positions[i3 + 1] = (Math.random() - 0.5) * 150;
+                positions[i3 + 2] = (Math.random() - 0.5) * 150;
+
+                const starColor = new THREE.Color("#FFFFFF");
+                colors[i3] = starColor.r;
+                colors[i3 + 1] = starColor.g;
+                colors[i3 + 2] = starColor.b;
+
+                sizes[i] = Math.random() * 0.3 + 0.1;
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+            // 創建星星材質貼圖（使用 canvas 繪製）
+            const textureCanvas = document.createElement('canvas');
+            textureCanvas.width = 64;
+            textureCanvas.height = 64;
+            const ctx = textureCanvas.getContext('2d');
+
+            // 繪製星星形狀
+            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            gradient.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+            gradient.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+            gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 64, 64);
+
+            // 添加十字光芒
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillRect(30, 0, 4, 64);
+            ctx.fillRect(0, 30, 64, 4);
+
+            const texture = new THREE.CanvasTexture(textureCanvas);
+
+            const material = new THREE.PointsMaterial({
+                size: 0.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                map: texture,
+                sizeAttenuation: true
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            // Create Sun
+            const sunGeometry = new THREE.SphereGeometry(3, 64, 64);
+            const sunTextureLoader = new THREE.TextureLoader();
+            const sunTexture = sunTextureLoader.load('person-main/textures/2k_sun.jpg');
+
+            const sunMaterial = new THREE.MeshBasicMaterial({
+                map: sunTexture,
+                emissive: '#ff9900',
+                emissiveIntensity: 0.5
+            });
+
+            sun = new THREE.Mesh(sunGeometry, sunMaterial);
+            sun.position.set(0, 0, 0);
+            scene.add(sun);
+
+            // Create Planets
+            const textureLoader = new THREE.TextureLoader();
+
+            planetData.forEach((data, index) => {
+                const planetGeometry = new THREE.SphereGeometry(data.size, 32, 32);
+                const planetTexture = textureLoader.load(data.texture);
+
+                const planetMaterial = new THREE.MeshStandardMaterial({
+                    map: planetTexture,
+                    roughness: 1.0,
+                    metalness: 0.0
+                });
+
+                const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+                planet.castShadow = true;
+                planet.receiveShadow = true;
+
+                // Orbit ring
+                const orbitGeometry = new THREE.RingGeometry(data.orbit - 0.05, data.orbit + 0.05, 128);
+                const orbitMaterial = new THREE.MeshBasicMaterial({
+                    color: '#00FFFF',
+                    transparent: true,
+                    opacity: 0.15,
+                    side: THREE.DoubleSide
+                });
+                const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+                orbit.rotation.x = Math.PI / 2;
+                scene.add(orbit);
+
+                // Saturn ring
+                if (data.name === 'Saturn' && data.ring) {
+                    const ringTexture = textureLoader.load(data.ring.texture);
+                    const ringGeometry = new THREE.RingGeometry(data.size * 1.5, data.size * 2.5, 64);
+                    const ringMaterial = new THREE.MeshBasicMaterial({
+                        map: ringTexture,
+                        transparent: true,
+                        opacity: 0.7,
+                        side: THREE.DoubleSide
+                    });
+                    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                    ring.rotation.x = Math.PI / 2.5;
+                    planet.add(ring);
+                }
+
+                planet.userData = {
+                    orbit: data.orbit,
+                    speed: data.speed * 0.0008,
+                    angle: Math.random() * Math.PI * 2,
+                    name: data.name
+                };
+
+                planets.push(planet);
+                scene.add(planet);
+            });
+
+            // Drag controls
+            let isDragging = false;
+            let dragStartX = 0;
+            let dragStartY = 0;
+            let dragRotationX = 0;
+            let dragRotationY = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                dragRotationX = targetRotation.x;
+                dragRotationY = targetRotation.y;
+                container.classList.add('grabbing');
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                container.classList.remove('grabbing');
+            });
+
+            document.addEventListener('mousemove', (event) => {
+                if (isDragging) {
+                    const deltaX = (event.clientX - dragStartX) / window.innerWidth;
+                    const deltaY = (event.clientY - dragStartY) / window.innerHeight;
+
+                    targetRotation.y = dragRotationY + deltaX * 2;
+                    targetRotation.x = dragRotationX + deltaY * 2;
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.0001;
+
+            // Star twinkling
+            if (particles) {
+                const sizes = particles.geometry.attributes.size.array;
+                for (let i = 0; i < sizes.length; i++) {
+                    sizes[i] = (Math.sin(time * 5 + i) + 1) * 0.15 + 0.1;
+                }
+                particles.geometry.attributes.size.needsUpdate = true;
+                particles.rotation.z = time * 0.01;
+            }
+
+            // Sun rotation and pulsing
+            if (sun) {
+                sun.rotation.y += 0.001;
+                const pulse = Math.sin(time * 2) * 0.03 + 1;
+                sun.scale.set(pulse, pulse, pulse);
+            }
+
+            // Planet orbits
+            planets.forEach(planet => {
+                planet.userData.angle += planet.userData.speed;
+                planet.position.x = Math.cos(planet.userData.angle) * planet.userData.orbit;
+                planet.position.z = Math.sin(planet.userData.angle) * planet.userData.orbit;
+                planet.rotation.y += 0.01;
+            });
+
+            // Scene rotation
+            scene.rotation.x += (targetRotation.x - scene.rotation.x) * 0.05;
+            scene.rotation.y += (targetRotation.y - scene.rotation.y) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+    </script>
+
+    <script>
+        // --- Form Logic ---
+        const mockEmployees = [
+            { id: '101', name: 'Alan Chen', dept: 'IT Dept', title: 'Engineer' },
+            { id: '102', name: 'Bob Lin', dept: 'Sales', title: 'Manager' },
+            { id: '103', name: 'Debbie Wu', dept: 'HR', title: 'Specialist' },
+            { id: '104', name: 'Max Wang', dept: 'RD', title: 'Director' },
+            { id: '105', name: 'Demi Liu', dept: 'Finance', title: 'Clerk' }
+        ];
+
+        let selectedEmployees = [];
+        let photoData = null;
+        let signatureData = null;
+        let hasSignature = false;
+
+        // 1. Employee List
+        function renderEmployeeList(list) {
+            const container = document.getElementById('employeeList');
+            container.innerHTML = list.map(emp => {
+                const isSelected = selectedEmployees.find(e => e.id === emp.id);
+                return `
+                <div class="employee-item ${isSelected ? 'selected' : ''}" onclick="toggleEmployee('${emp.id}')">
+                    <div>
+                        <div style="font-weight: 600; color: #fff;">${emp.name}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">${emp.dept} - ${emp.title}</div>
+                    </div>
+                    ${isSelected ? '<span style="color: var(--primary-color);">✓</span>' : ''}
+                </div>
+                `;
+            }).join('');
+        }
+
+        window.toggleEmployee = function (id) {
+            const emp = mockEmployees.find(e => e.id === id);
+            const index = selectedEmployees.findIndex(e => e.id === id);
+
+            if (index > -1) {
+                selectedEmployees.splice(index, 1);
+            } else {
+                selectedEmployees.push(emp);
+            }
+
+            renderEmployeeList(mockEmployees);
+            updateSelectedCount();
+            document.getElementById('employeeError').style.display = 'none';
+        }
+
+        function updateSelectedCount() {
+            const div = document.getElementById('selectedCount');
+            const num = document.getElementById('countNum');
+            if (selectedEmployees.length > 0) {
+                div.style.display = 'block';
+                num.innerText = selectedEmployees.length;
+            } else {
+                div.style.display = 'none';
+            }
+        }
+
+        document.getElementById('employeeSearch').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = mockEmployees.filter(emp =>
+                emp.name.toLowerCase().includes(val) || emp.dept.toLowerCase().includes(val)
+            );
+            renderEmployeeList(filtered);
+        });
+
+        renderEmployeeList(mockEmployees);
+
+        // 2. Camera
+        document.getElementById('cameraInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    photoData = event.target.result;
+                    document.getElementById('photoPreview').innerHTML = `<img src="${photoData}">`;
+                    document.getElementById('photoError').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 3. Signature
+        const canvas = document.getElementById('signaturePad');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            ctx.scale(ratio, ratio);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+        }
+
+        setTimeout(resizeCanvas, 100);
+        window.addEventListener('resize', resizeCanvas);
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function start(e) {
+            e.preventDefault();
+            isDrawing = true;
+            hasSignature = true;
+            document.getElementById('signatureError').style.display = 'none';
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function move(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function end() {
+            isDrawing = false;
+        }
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', move);
+        canvas.addEventListener('mouseup', end);
+        canvas.addEventListener('touchstart', start, { passive: false });
+        canvas.addEventListener('touchmove', move, { passive: false });
+        canvas.addEventListener('touchend', end);
+
+        document.getElementById('clearSignature').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hasSignature = false;
+        });
+
+        // 4. Submit
+        document.getElementById('visitorForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let isValid = true;
+
+            // Simple Validation
+            if (!document.getElementById('visitorName').value) {
+                document.getElementById('nameError').style.display = 'block'; isValid = false;
+            }
+            if (!document.getElementById('company').value) {
+                document.getElementById('companyError').style.display = 'block'; isValid = false;
+            }
+            if (!document.getElementById('phone').value) {
+                document.getElementById('phoneError').style.display = 'block'; isValid = false;
+            }
+            if (!photoData) {
+                document.getElementById('photoError').style.display = 'block'; isValid = false;
+            }
+            if (selectedEmployees.length === 0) {
+                document.getElementById('employeeError').style.display = 'block'; isValid = false;
+            }
+            if (!hasSignature) {
+                document.getElementById('signatureError').style.display = 'block'; isValid = false;
+            }
+            if (!document.getElementById('ruleAgree').checked) {
+                document.getElementById('ruleError').style.display = 'block'; isValid = false;
+            }
+
+            if (isValid) {
+                document.getElementById('successModal').style.display = 'flex';
+            }
+        });
+
+        // Clear errors on interaction
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function () {
+                const err = this.parentElement.querySelector('.error-msg');
+                if (err) err.style.display = 'none';
+            });
+        });
+        document.getElementById('ruleAgree').addEventListener('change', () => {
+            document.getElementById('ruleError').style.display = 'none';
+        });
+    </script>
+</body>
+
+</html>

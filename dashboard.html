@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiwynn Visitor Analytics - Real-time Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="three.min.js"></script>
+    <script src="chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #00f2ff;
+            --bg-dark: #0a0e27;
+            --glass-bg: rgba(15, 25, 50, 0.7);
+            --glass-border: rgba(0, 242, 255, 0.2);
+            --text-color: #e0f7ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .dashboard-container {
+            position: relative;
+            z-index: 10;
+            padding: 40px 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+
+        .header p {
+            color: #8aa;
+            margin-top: 5px;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #00ff99;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff99;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 153, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 153, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 153, 0); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+
+        .stat-label {
+            color: #8aa;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.3s;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #fff;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.tall {
+            height: 400px;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        .error-msg {
+            color: #ff3366;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 51, 102, 0.1);
+            border: 1px solid #ff3366;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card.full-width {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <div>
+                <h1>緯穎訪客數據分析</h1>
+                <p>即時安全監控與訪問管理</p>
+            </div>
+            <div class="live-indicator">
+                <div class="dot"></div>
+                系統運行中
+            </div>
+        </div>
+
+        <!-- Key Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">今日訪客</div>
+                <div class="stat-value" id="stat-visitors">0</div>
+                <div class="stat-change" id="visitors-change" style="color: #00ff99;">▲ 12% 較昨日</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">目前在場人數</div>
+                <div class="stat-value" id="stat-onsite">0</div>
+                <div class="stat-change" style="color: #8aa;">容量: <span id="capacity">0</span>%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">平均訪問時長</div>
+                <div class="stat-value"><span id="avg-duration">1.5</span><span style="font-size: 1rem;">h</span></div>
+                <div class="stat-change" style="color: #00ff99;">▲ 8% 效率提升</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">安全警報</div>
+                <div class="stat-value" style="color: #ff3366;" id="stat-alerts">0</div>
+                <div class="stat-change" style="color: #00ff99;">系統正常</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <!-- Traffic Line Chart -->
+            <div class="chart-card">
+                <div class="chart-title">訪客流量 (24小時)</div>
+                <div class="chart-container">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Department 3D Bar Chart -->
+            <div class="chart-card">
+                <div class="chart-title">各部門訪問量 (3D)</div>
+                <div class="chart-container">
+                    <canvas id="deptChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Visitor Type Distribution -->
+            <div class="chart-card">
+                <div class="chart-title">訪客類型分布</div>
+                <div class="chart-container">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Peak Hours Radar -->
+            <div class="chart-card">
+                <div class="chart-title">高峰時段分析</div>
+                <div class="chart-container">
+                    <canvas id="peakHoursChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Weekly Trend -->
+            <div class="chart-card full-width">
+                <div class="chart-title">每週訪客趨勢</div>
+                <div class="chart-container tall">
+                    <canvas id="weeklyTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Purpose Breakdown -->
+            <div class="chart-card">
+                <div class="chart-title">訪問目的分析</div>
+                <div class="chart-container">
+                    <canvas id="purposeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== Three.js Background ==========
+        const initThreeJS = () => {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            // Create particles (星星效果)
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 3000;
+            const positions = new Float32Array(particlesCount * 3);
+            const colors = new Float32Array(particlesCount * 3);
+            const sizes = new Float32Array(particlesCount);
+
+            // 創建星星
+            for (let i = 0; i < particlesCount; i++) {
+                const i3 = i * 3;
+                positions[i3] = (Math.random() - 0.5) * 150;
+                positions[i3 + 1] = (Math.random() - 0.5) * 150;
+                positions[i3 + 2] = (Math.random() - 0.5) * 150;
+
+                // 星星顏色：白色到黃色
+                const starColors = [
+                    new THREE.Color("#FFFFFF"),
+                    new THREE.Color("#FFFFAA"),
+                    new THREE.Color("#FFE4B5"),
+                    new THREE.Color("#FFF8DC")
+                ];
+                const starColor = starColors[Math.floor(Math.random() * starColors.length)];
+                colors[i3] = starColor.r;
+                colors[i3 + 1] = starColor.g;
+                colors[i3 + 2] = starColor.b;
+
+                // 星星大小
+                sizes[i] = Math.random() * 0.3 + 0.1;
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            particlesGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+            // 創建星星材質貼圖
+            const textureCanvas = document.createElement('canvas');
+            textureCanvas.width = 64;
+            textureCanvas.height = 64;
+            const ctx = textureCanvas.getContext('2d');
+
+            // 繪製星星形狀
+            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            gradient.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+            gradient.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+            gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 64, 64);
+
+            // 添加十字光芒
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillRect(30, 0, 4, 64);
+            ctx.fillRect(0, 30, 64, 4);
+
+            const texture = new THREE.CanvasTexture(textureCanvas);
+
+            const material = new THREE.PointsMaterial({
+                size: 0.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                map: texture,
+                sizeAttenuation: true
+            });
+
+            const particlesMesh = new THREE.Points(particlesGeometry, material);
+            scene.add(particlesMesh);
+
+            camera.position.z = 50;
+            camera.position.y = 10;
+
+            // Animation loop
+            const clock = new THREE.Clock();
+            const animate = () => {
+                requestAnimationFrame(animate);
+                const time = clock.getElapsedTime();
+
+                // 星星閃爍效果
+                const sizesArray = particlesGeometry.attributes.size.array;
+                for (let i = 0; i < sizesArray.length; i++) {
+                    sizesArray[i] = (Math.sin(time * 5 + i) + 1) * 0.15 + 0.1;
+                }
+                particlesGeometry.attributes.size.needsUpdate = true;
+
+                // 緩慢旋轉整個星空
+                particlesMesh.rotation.z = time * 0.02;
+                particlesMesh.rotation.x = time * 0.01;
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+
+        // ========== Mock Data Generator ==========
+        const generateMockData = () => {
+            return {
+                todayVisitors: Math.floor(Math.random() * 50) + 100,
+                currentOnsite: Math.floor(Math.random() * 30) + 20,
+                avgDuration: (Math.random() * 1.5 + 1).toFixed(1),
+                securityAlerts: Math.floor(Math.random() * 3),
+                capacity: Math.floor(Math.random() * 30) + 40,
+
+                hourlyTraffic: Array.from({ length: 10 }, () => Math.floor(Math.random() * 40) + 10),
+
+                departments: {
+                    labels: ['研發部', '業務部', '人資部', '資訊部', '財務部', '行銷部'],
+                    data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 50) + 20)
+                },
+
+                visitorTypes: {
+                    labels: ['廠商', '面試者', '客戶', '合作夥伴', '其他'],
+                    data: Array.from({ length: 5 }, () => Math.floor(Math.random() * 30) + 10)
+                },
+
+                peakHours: {
+                    labels: ['8-10時', '10-12時', '12-14時', '14-16時', '16-18時', '18-20時'],
+                    data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 80) + 20)
+                },
+
+                weeklyTrend: {
+                    labels: ['週一', '週二', '週三', '週四', '週五', '週六', '週日'],
+                    visitors: Array.from({ length: 7 }, () => Math.floor(Math.random() * 80) + 60),
+                    checkIns: Array.from({ length: 7 }, () => Math.floor(Math.random() * 70) + 50),
+                    checkOuts: Array.from({ length: 7 }, () => Math.floor(Math.random() * 70) + 50)
+                },
+
+                purposes: {
+                    labels: ['商務會議', '技術支援', '面試', '培訓', '送貨', '其他'],
+                    data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 40) + 10)
+                }
+            };
+        };
+
+        // ========== Counter Animation ==========
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // ========== Initialize Dashboard ==========
+        const initDashboard = () => {
+            initThreeJS();
+
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded');
+                const container = document.querySelector('.dashboard-container');
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'error-msg';
+                errorMsg.innerHTML = '<h2>❌ Error: Chart.js failed to load</h2><p>Please check chart.min.js file path</p>';
+                container.prepend(errorMsg);
+                return;
+            }
+
+            // Chart.js global config
+            Chart.defaults.color = '#8aa';
+            Chart.defaults.borderColor = 'rgba(0, 242, 255, 0.1)';
+            Chart.defaults.font.family = "'Inter', sans-serif";
+
+            // Get mock data
+            const data = generateMockData();
+
+            // Update stats with animation
+            animateValue("stat-visitors", 0, data.todayVisitors, 2000);
+            animateValue("stat-onsite", 0, data.currentOnsite, 2000);
+            animateValue("stat-alerts", 0, data.securityAlerts, 1500);
+            animateValue("capacity", 0, data.capacity, 2000);
+
+            document.getElementById('avg-duration').textContent = data.avgDuration;
+
+            // ========== 1. Traffic Line Chart ==========
+            new Chart(document.getElementById('trafficChart'), {
+                type: 'line',
+                data: {
+                    labels: ['8點', '9點', '10點', '11點', '12點', '14點', '15點', '16點', '17點', '18點'],
+                    datasets: [{
+                        label: '訪客數',
+                        data: data.hourlyTraffic,
+                        borderColor: '#00f2ff',
+                        backgroundColor: 'rgba(0, 242, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 25, 50, 0.9)',
+                            borderColor: '#00f2ff',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 242, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ========== 2. Department 3D Bar Chart ==========
+            new Chart(document.getElementById('deptChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.departments.labels,
+                    datasets: [{
+                        label: '訪問次數',
+                        data: data.departments.data,
+                        backgroundColor: [
+                            'rgba(0, 242, 255, 0.8)',
+                            'rgba(0, 102, 255, 0.8)',
+                            'rgba(153, 51, 255, 0.8)',
+                            'rgba(255, 51, 102, 0.8)',
+                            'rgba(0, 255, 153, 0.8)',
+                            'rgba(255, 204, 0, 0.8)'
+                        ],
+                        borderColor: [
+                            '#00f2ff',
+                            '#0066ff',
+                            '#9933ff',
+                            '#ff3366',
+                            '#00ff99',
+                            '#ffcc00'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 25, 50, 0.9)',
+                            borderColor: '#00f2ff',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 242, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ========== 3. Type Doughnut Chart ==========
+            new Chart(document.getElementById('typeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.visitorTypes.labels,
+                    datasets: [{
+                        data: data.visitorTypes.data,
+                        backgroundColor: [
+                            '#00f2ff',
+                            '#0066ff',
+                            '#9933ff',
+                            '#ff3366',
+                            '#666'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#0a0e27'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#8aa',
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 25, 50, 0.9)',
+                            borderColor: '#00f2ff',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+
+            // ========== 4. Peak Hours Radar Chart ==========
+            new Chart(document.getElementById('peakHoursChart'), {
+                type: 'radar',
+                data: {
+                    labels: data.peakHours.labels,
+                    datasets: [{
+                        label: '活動量',
+                        data: data.peakHours.data,
+                        borderColor: '#00f2ff',
+                        backgroundColor: 'rgba(0, 242, 255, 0.2)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#00f2ff',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#00f2ff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 25, 50, 0.9)',
+                            borderColor: '#00f2ff',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 242, 255, 0.2)'
+                            },
+                            angleLines: {
+                                color: 'rgba(0, 242, 255, 0.2)'
+                            },
+                            ticks: {
+                                backdropColor: 'transparent'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ========== 5. Weekly Trend Multi-line Chart ==========
+            new Chart(document.getElementById('weeklyTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: data.weeklyTrend.labels,
+                    datasets: [
+                        {
+                            label: '總訪客數',
+                            data: data.weeklyTrend.visitors,
+                            borderColor: '#00f2ff',
+                            backgroundColor: 'rgba(0, 242, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2
+                        },
+                        {
+                            label: '簽入人數',
+                            data: data.weeklyTrend.checkIns,
+                            borderColor: '#00ff99',
+                            backgroundColor: 'rgba(0, 255, 153, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2
+                        },
+                        {
+                            label: '簽出人數',
+                            data: data.weeklyTrend.checkOuts,
+                            borderColor: '#ff3366',
+                            backgroundColor: 'rgba(255, 51, 102, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#8aa',
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 25, 50, 0.9)',
+                            borderColor: '#00f2ff',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 242, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ========== 6. Purpose Horizontal Bar Chart ==========
+            new Chart(document.getElementById('purposeChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.purposes.labels,
+                    datasets: [{
+                        label: '次數',
+                        data: data.purposes.data,
+                        backgroundColor: 'rgba(0, 242, 255, 0.6)',
+                        borderColor: '#00f2ff',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 25, 50, 0.9)',
+                            borderColor: '#00f2ff',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 242, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ========== Auto-refresh data every 30 seconds ==========
+            setInterval(() => {
+                const newData = generateMockData();
+
+                // Update stats
+                document.getElementById('stat-visitors').textContent = newData.todayVisitors;
+                document.getElementById('stat-onsite').textContent = newData.currentOnsite;
+                document.getElementById('stat-alerts').textContent = newData.securityAlerts;
+                document.getElementById('capacity').textContent = newData.capacity;
+                document.getElementById('avg-duration').textContent = newData.avgDuration;
+
+                console.log('📊 儀表板數據已更新於 ' + new Date().toLocaleTimeString());
+            }, 30000);
+        };
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>
