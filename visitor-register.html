@@ -129,6 +129,13 @@
             letter-spacing: 2px;
         }
 
+
+        .admin-btn:hover {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        }
+
         .form-section {
             margin-bottom: 32px;
             opacity: 0;
@@ -835,6 +842,157 @@
                     const deltaX = (event.clientX - dragStartX) / window.innerWidth;
                     const deltaY = (event.clientY - dragStartY) / window.innerHeight;
 
+                    targetRotation.y = dragRotationY + deltaX * 2;
+                    targetRotation.x = dragRotationX + deltaY * 2;
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.0001;
+
+            // Star twinkling
+            if (particles) {
+                const sizes = particles.geometry.attributes.size.array;
+                for (let i = 0; i < sizes.length; i++) {
+                    sizes[i] = (Math.sin(time * 5 + i) + 1) * 0.15 + 0.1;
+                }
+                particles.geometry.attributes.size.needsUpdate = true;
+                particles.rotation.z = time * 0.01;
+            }
+
+            // Sun rotation and pulsing
+            if (sun) {
+                sun.rotation.y += 0.001;
+                const pulse = Math.sin(time * 2) * 0.03 + 1;
+                sun.scale.set(pulse, pulse, pulse);
+            }
+
+            // Planet orbits
+            planets.forEach(planet => {
+                planet.userData.angle += planet.userData.speed;
+                planet.position.x = Math.cos(planet.userData.angle) * planet.userData.orbit;
+                planet.position.z = Math.sin(planet.userData.angle) * planet.userData.orbit;
+                planet.rotation.y += 0.01;
+            });
+
+            // Scene rotation
+            scene.rotation.x += (targetRotation.x - scene.rotation.x) * 0.05;
+            scene.rotation.y += (targetRotation.y - scene.rotation.y) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+    </script>
+
+    <script>
+        // --- Form Logic ---
+        const mockEmployees = [
+            { id: '101', name: 'Alan Chen', dept: 'IT Dept', title: 'Engineer' },
+            { id: '102', name: 'Bob Lin', dept: 'Sales', title: 'Manager' },
+            { id: '103', name: 'Debbie Wu', dept: 'HR', title: 'Specialist' },
+            { id: '104', name: 'Max Wang', dept: 'RD', title: 'Director' },
+            { id: '105', name: 'Demi Liu', dept: 'Finance', title: 'Clerk' }
+        ];
+
+        let selectedEmployees = [];
+        let photoData = null;
+        let signatureData = null;
+        let hasSignature = false;
+
+        // 1. Employee List
+        function renderEmployeeList(list) {
+            const container = document.getElementById('employeeList');
+            container.innerHTML = list.map(emp => {
+                const isSelected = selectedEmployees.find(e => e.id === emp.id);
+                return `
+                <div class="employee-item ${isSelected ? 'selected' : ''}" onclick="toggleEmployee('${emp.id}')">
+                    <div>
+                        <div style="font-weight: 600; color: #fff;">${emp.name}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">${emp.dept} - ${emp.title}</div>
+                    </div>
+                    ${isSelected ? '<span style="color: var(--primary-color);">✓</span>' : ''}
+                </div>
+                `;
+            }).join('');
+        }
+
+        window.toggleEmployee = function (id) {
+            const emp = mockEmployees.find(e => e.id === id);
+            const index = selectedEmployees.findIndex(e => e.id === id);
+
+            if (index > -1) {
+                selectedEmployees.splice(index, 1);
+            } else {
+                selectedEmployees.push(emp);
+            }
+
+            renderEmployeeList(mockEmployees);
+            updateSelectedCount();
+            document.getElementById('employeeError').style.display = 'none';
+        }
+
+        function updateSelectedCount() {
+            const div = document.getElementById('selectedCount');
+            const num = document.getElementById('countNum');
+            if (selectedEmployees.length > 0) {
+                div.style.display = 'block';
+                num.innerText = selectedEmployees.length;
+            } else {
+                div.style.display = 'none';
+            }
+        }
+
+        document.getElementById('employeeSearch').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = mockEmployees.filter(emp =>
+                emp.name.toLowerCase().includes(val) || emp.dept.toLowerCase().includes(val)
+            );
+            renderEmployeeList(filtered);
+        });
+
+        renderEmployeeList(mockEmployees);
+
+        // 2. Camera
+        document.getElementById('cameraInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    photoData = event.target.result;
+                    document.getElementById('photoPreview').innerHTML = `<img src="${photoData}">`;
+                    document.getElementById('photoError').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 3. Signature
+        const canvas = document.getElementById('signaturePad');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            ctx.scale(ratio, ratio);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+        }
+
+        setTimeout(resizeCanvas, 100);
+        window.addEventListener('resize', resizeCanvas);
+
+        function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
