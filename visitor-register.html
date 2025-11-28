@@ -105,12 +105,32 @@
             justify-content: center;
             align-items: center;
             margin-bottom: 20px;
+            perspective: 1000px;
+            /* 3D Perspective */
         }
 
         .logo-container img {
             max-width: 280px;
             height: auto;
             filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.3));
+            transition: transform 0.1s ease-out;
+            /* Smooth interactive movement */
+            transform-style: preserve-3d;
+            animation: float 6s ease-in-out infinite;
+            /* Default floating animation */
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(2deg);
+            }
         }
 
         .header h1 {
@@ -491,8 +511,8 @@
     <div class="container">
         <div class="header">
             <button id="langToggle" class="lang-switch" onclick="toggleLanguage()">English</button>
-            <div class="logo-container">
-                <img src="assets/images/wiwynn-logo.png" alt="Wiwynn Logo">
+            <div class="logo-container" id="logoContainer">
+                <img src="assets/images/wiwynn-logo.png" alt="Wiwynn Logo" id="logoImage">
             </div>
             <h1 data-i18n="title">訪客登記系統</h1>
         </div>
@@ -1093,6 +1113,34 @@
             // Update Rules Content
             document.getElementById('rulesContent').innerHTML = t.rules_content;
         };
+
+        // --- Logo Interaction ---
+        const logoContainer = document.getElementById('logoContainer');
+        const logoImage = document.getElementById('logoImage');
+
+        if (logoContainer && logoImage) {
+            logoContainer.addEventListener('mousemove', (e) => {
+                const rect = logoContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = ((y - centerY) / centerY) * -15; // Max 15deg
+                const rotateY = ((x - centerX) / centerX) * 15; // Max 15deg
+
+                logoImage.style.animation = 'none'; // Stop floating
+                logoImage.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.1)`;
+            });
+
+            logoContainer.addEventListener('mouseleave', () => {
+                logoImage.style.transform = 'rotateX(0) rotateY(0) scale(1)';
+                setTimeout(() => {
+                    logoImage.style.animation = 'float 6s ease-in-out infinite'; // Resume floating
+                }, 100);
+            });
+        }
 
         // 1. Employee List
         function renderEmployeeList(list) {
