@@ -129,11 +129,27 @@
             letter-spacing: 2px;
         }
 
+        /* Language Switcher */
+        .lang-switch {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
 
-        .admin-btn:hover {
+        .lang-switch:hover {
             background: var(--primary-color);
             color: #000;
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
         }
 
         .form-section {
@@ -218,6 +234,22 @@
             border-color: var(--primary-color);
             background: rgba(0, 242, 255, 0.05);
             box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+
+        /* Dropdown Styling Fix */
+        select.form-input {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+        }
+
+        select.form-input option {
+            background-color: #0a0e27;
+            color: #fff;
+            padding: 10px;
         }
 
         .photo-area {
@@ -444,6 +476,11 @@
                 margin-top: 20px;
                 margin-bottom: 20px;
             }
+
+            .lang-switch {
+                top: 10px;
+                right: 10px;
+            }
         }
     </style>
 </head>
@@ -453,87 +490,111 @@
 
     <div class="container">
         <div class="header">
+            <button id="langToggle" class="lang-switch" onclick="toggleLanguage()">English</button>
             <div class="logo-container">
                 <img src="assets/images/wiwynn-logo.png" alt="Wiwynn Logo">
             </div>
-            <h1>訪客登記系統</h1>
+            <h1 data-i18n="title">訪客登記系統</h1>
         </div>
 
         <form id="visitorForm">
             <!-- 1. Basic Info -->
             <div class="form-section">
-                <div class="section-title">基本資料</div>
+                <div class="section-title" data-i18n="section_basic">基本資料</div>
                 <div class="form-group">
-                    <label class="form-label">訪客姓名</label>
+                    <label class="form-label" data-i18n="label_name">訪客姓名</label>
                     <input type="text" id="visitorName" class="form-input" placeholder="請輸入您的姓名" required>
-                    <div class="error-msg" id="nameError">此欄位為必填</div>
+                    <div class="error-msg" id="nameError" data-i18n="error_required">此欄位為必填</div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">公司名稱</label>
+                    <label class="form-label" data-i18n="label_company">公司名稱</label>
                     <input type="text" id="company" class="form-input" placeholder="請輸入您的公司名稱" required>
-                    <div class="error-msg" id="companyError">此欄位為必填</div>
+                    <div class="error-msg" id="companyError" data-i18n="error_required">此欄位為必填</div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">聯絡電話</label>
+                    <label class="form-label" data-i18n="label_phone">聯絡電話</label>
                     <input type="tel" id="phone" class="form-input" placeholder="請輸入手機號碼" required>
-                    <div class="error-msg" id="phoneError">此欄位為必填</div>
+                    <div class="error-msg" id="phoneError" data-i18n="error_required">此欄位為必填</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="label_floor">樓層</label>
+                    <select id="floor" class="form-input" required>
+                        <option value="" disabled selected data-i18n="placeholder_floor">請選擇樓層</option>
+                        <option value="A23">A23</option>
+                        <option value="C26">C26</option>
+                        <option value="C7">C7</option>
+                        <option value="C8">C8</option>
+                    </select>
+                    <div class="error-msg" id="floorError" data-i18n="error_floor">請選擇樓層</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="label_type">訪客類型</label>
+                    <select id="guestType" class="form-input" required>
+                        <option value="" disabled selected data-i18n="placeholder_type">請選擇訪客類型</option>
+                        <option value="Interviewer" data-i18n="opt_interviewer">面試者 (Interviewer)</option>
+                        <option value="VIP" data-i18n="opt_vip">貴賓 (VIP)</option>
+                    </select>
+                    <div class="error-msg" id="guestTypeError" data-i18n="error_type">請選擇訪客類型</div>
                 </div>
             </div>
 
             <!-- 2. Photo -->
             <div class="form-section">
-                <div class="section-title">照片拍攝</div>
+                <div class="section-title" data-i18n="section_photo">照片拍攝</div>
                 <div class="photo-area">
                     <div class="photo-preview" id="photoPreview">
                         <div class="photo-placeholder">
                             <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
-                            <div>尚未拍攝</div>
+                            <div data-i18n="photo_placeholder">尚未拍攝</div>
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 15px; justify-content: center;">
                         <label class="btn btn-primary">
-                            開啟相機
+                            <span data-i18n="btn_camera">開啟相機</span>
                             <input type="file" id="cameraInput" accept="image/*" capture="environment"
                                 style="display: none;">
                         </label>
                         <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center;">
-                            請拍攝清晰正面照片<br>用於製作訪客證
+                            <span data-i18n="photo_desc_1">請拍攝清晰正面照片</span><br>
+                            <span data-i18n="photo_desc_2">用於製作訪客證</span>
                         </p>
                     </div>
                 </div>
-                <div class="error-msg" id="photoError">請拍攝照片</div>
+                <div class="error-msg" id="photoError" data-i18n="error_photo">請拍攝照片</div>
             </div>
 
             <!-- 3. Host Search -->
             <div class="form-section">
-                <div class="section-title">拜訪對象</div>
+                <div class="section-title" data-i18n="section_host">拜訪對象</div>
                 <input type="text" id="employeeSearch" class="form-input" placeholder="搜尋員工姓名或部門...">
                 <div id="selectedCount"
                     style="margin-top: 10px; color: var(--primary-color); font-weight: 600; display: none;">
-                    已選擇 <span id="countNum">0</span> 位員工
+                    <span data-i18n="selected_prefix">已選擇</span> <span id="countNum">0</span> <span
+                        data-i18n="selected_suffix">位員工</span>
                 </div>
                 <div class="employee-list" id="employeeList">
                     <!-- JS Injected -->
                 </div>
-                <div class="error-msg" id="employeeError">請至少選擇一位拜訪對象</div>
+                <div class="error-msg" id="employeeError" data-i18n="error_host">請至少選擇一位拜訪對象</div>
             </div>
 
             <!-- 4. Signature -->
             <div class="form-section">
-                <div class="section-title">電子簽名</div>
+                <div class="section-title" data-i18n="section_signature">電子簽名</div>
                 <div style="position: relative;">
                     <canvas id="signaturePad" class="signature-pad"></canvas>
                     <button type="button" id="clearSignature"
-                        style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">清除</button>
+                        style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;"
+                        data-i18n="btn_clear">清除</button>
                 </div>
-                <div class="error-msg" id="signatureError">請完成簽名</div>
+                <div class="error-msg" id="signatureError" data-i18n="error_signature">請完成簽名</div>
             </div>
 
             <!-- 5. Rules & Submit -->
             <div class="form-section">
-                <div class="section-title">訪客規章</div>
+                <div class="section-title" data-i18n="section_rules">訪客規章</div>
                 <div class="rules-container">
-                    <div class="rules-content">
+                    <div class="rules-content" id="rulesContent">
                         <h3>緯穎科技訪客安全與保密規章</h3>
                         <p>1. 訪客進入本公司區域，應遵守本公司之安全管理規定。</p>
                         <p>2. 未經許可，不得在公司區域內拍照、錄影或錄音。</p>
@@ -544,13 +605,14 @@
                     </div>
                     <label class="checkbox-wrapper">
                         <input type="checkbox" id="ruleAgree" class="checkbox-input">
-                        <span style="font-size: 0.95rem;">我已詳細閱讀並同意上述訪客規章</span>
+                        <span style="font-size: 0.95rem;" data-i18n="agree_rules">我已詳細閱讀並同意上述訪客規章</span>
                     </label>
                 </div>
-                <div class="error-msg" id="ruleError" style="margin-bottom: 20px;">請勾選同意訪客規章</div>
+                <div class="error-msg" id="ruleError" style="margin-bottom: 20px;" data-i18n="error_rules">請勾選同意訪客規章
+                </div>
 
                 <button type="submit" class="btn btn-primary" style="font-size: 1.1rem; padding: 20px;">
-                    完成登記
+                    <span data-i18n="btn_submit">完成登記</span>
                 </button>
             </div>
         </form>
@@ -560,9 +622,9 @@
     <div class="modal" id="successModal">
         <div class="modal-content">
             <div class="success-icon">✓</div>
-            <h2 style="color: #fff; margin-bottom: 10px;">登記成功</h2>
-            <p style="color: var(--text-muted); margin-bottom: 30px;">系統已通知受訪者，請稍候。</p>
-            <button class="btn btn-primary" onclick="location.reload()">關閉</button>
+            <h2 style="color: #fff; margin-bottom: 10px;" data-i18n="success_title">登記成功</h2>
+            <p style="color: var(--text-muted); margin-bottom: 30px;" data-i18n="success_desc">系統已通知受訪者，請稍候。</p>
+            <button class="btn btn-primary" onclick="location.reload()" data-i18n="btn_close">關閉</button>
         </div>
     </div>
 
@@ -907,6 +969,131 @@
         let signatureData = null;
         let hasSignature = false;
 
+        // --- Internationalization (i18n) ---
+        const translations = {
+            zh: {
+                title: '訪客登記系統',
+                section_basic: '基本資料',
+                label_name: '訪客姓名',
+                placeholder_name: '請輸入您的姓名',
+                label_company: '公司名稱',
+                placeholder_company: '請輸入您的公司名稱',
+                label_phone: '聯絡電話',
+                placeholder_phone: '請輸入手機號碼',
+                label_floor: '樓層',
+                placeholder_floor: '請選擇樓層',
+                label_type: '訪客類型',
+                placeholder_type: '請選擇訪客類型',
+                opt_interviewer: '面試者 (Interviewer)',
+                opt_vip: '貴賓 (VIP)',
+                section_photo: '照片拍攝',
+                photo_placeholder: '尚未拍攝',
+                btn_camera: '開啟相機',
+                photo_desc_1: '請拍攝清晰正面照片',
+                photo_desc_2: '用於製作訪客證',
+                section_host: '拜訪對象',
+                placeholder_host: '搜尋員工姓名或部門...',
+                selected_prefix: '已選擇',
+                selected_suffix: '位員工',
+                section_signature: '電子簽名',
+                btn_clear: '清除',
+                section_rules: '訪客規章',
+                agree_rules: '我已詳細閱讀並同意上述訪客規章',
+                btn_submit: '完成登記',
+                success_title: '登記成功',
+                success_desc: '系統已通知受訪者，請稍候。',
+                btn_close: '關閉',
+                error_required: '此欄位為必填',
+                error_floor: '請選擇樓層',
+                error_type: '請選擇訪客類型',
+                error_photo: '請拍攝照片',
+                error_host: '請至少選擇一位拜訪對象',
+                error_signature: '請完成簽名',
+                error_rules: '請勾選同意訪客規章',
+                rules_content: `<h3>緯穎科技訪客安全與保密規章</h3>
+                        <p>1. 訪客進入本公司區域，應遵守本公司之安全管理規定。</p>
+                        <p>2. 未經許可，不得在公司區域內拍照、錄影或錄音。</p>
+                        <p>3. 訪客不得攜帶違禁品、危險物品或未經授權之資訊設備進入。</p>
+                        <p>4. 訪客應配戴訪客證，並由接待人員陪同。</p>
+                        <p>5. 訪客所知悉之本公司機密資訊（包括但不限於技術、商業、人事等），負有保密義務，不得洩漏予第三人。</p>
+                        <p>6. 違反上述規定者，本公司有權拒絕其進入或要求其離開，並保留法律追訴權。</p>`
+            },
+            en: {
+                title: 'Visitor Registration',
+                section_basic: 'Basic Information',
+                label_name: 'Visitor Name',
+                placeholder_name: 'Enter your name',
+                label_company: 'Company',
+                placeholder_company: 'Enter your company',
+                label_phone: 'Phone Number',
+                placeholder_phone: 'Enter phone number',
+                label_floor: 'Floor',
+                placeholder_floor: 'Select Floor',
+                label_type: 'Visitor Type',
+                placeholder_type: 'Select Visitor Type',
+                opt_interviewer: 'Interviewer',
+                opt_vip: 'VIP',
+                section_photo: 'Photo Capture',
+                photo_placeholder: 'No Photo',
+                btn_camera: 'Open Camera',
+                photo_desc_1: 'Please take a clear front photo',
+                photo_desc_2: 'For visitor badge',
+                section_host: 'Host',
+                placeholder_host: 'Search name or dept...',
+                selected_prefix: 'Selected',
+                selected_suffix: 'employee(s)',
+                section_signature: 'Signature',
+                btn_clear: 'Clear',
+                section_rules: 'Visitor Rules',
+                agree_rules: 'I have read and agree to the rules',
+                btn_submit: 'Submit',
+                success_title: 'Registration Successful',
+                success_desc: 'Host has been notified. Please wait.',
+                btn_close: 'Close',
+                error_required: 'This field is required',
+                error_floor: 'Please select a floor',
+                error_type: 'Please select visitor type',
+                error_photo: 'Please take a photo',
+                error_host: 'Please select at least one host',
+                error_signature: 'Please sign here',
+                error_rules: 'Please agree to the rules',
+                rules_content: `<h3>Wiwynn Visitor Security & Confidentiality Rules</h3>
+                        <p>1. Visitors must comply with security regulations within company premises.</p>
+                        <p>2. Photography, video, or audio recording is prohibited without permission.</p>
+                        <p>3. Dangerous items or unauthorized IT equipment are prohibited.</p>
+                        <p>4. Visitors must wear badges and be accompanied by hosts.</p>
+                        <p>5. Confidential information (technical, business, HR, etc.) must be kept secret.</p>
+                        <p>6. Violators may be denied entry or asked to leave, with legal action reserved.</p>`
+            }
+        };
+
+        let currentLang = 'zh';
+
+        window.toggleLanguage = function () {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            const t = translations[currentLang];
+
+            // Update Toggle Button Text
+            document.getElementById('langToggle').textContent = currentLang === 'zh' ? 'English' : '中文';
+
+            // Update Text Content
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) {
+                    el.textContent = t[key];
+                }
+            });
+
+            // Update Placeholders
+            document.getElementById('visitorName').placeholder = t.placeholder_name;
+            document.getElementById('company').placeholder = t.placeholder_company;
+            document.getElementById('phone').placeholder = t.placeholder_phone;
+            document.getElementById('employeeSearch').placeholder = t.placeholder_host;
+
+            // Update Rules Content
+            document.getElementById('rulesContent').innerHTML = t.rules_content;
+        };
+
         // 1. Employee List
         function renderEmployeeList(list) {
             const container = document.getElementById('employeeList');
@@ -1081,6 +1268,12 @@
             if (!document.getElementById('phone').value) {
                 document.getElementById('phoneError').style.display = 'block'; isValid = false;
             }
+            if (!document.getElementById('floor').value) {
+                document.getElementById('floorError').style.display = 'block'; isValid = false;
+            }
+            if (!document.getElementById('guestType').value) {
+                document.getElementById('guestTypeError').style.display = 'block'; isValid = false;
+            }
             if (!photoData) {
                 document.getElementById('photoError').style.display = 'block'; isValid = false;
             }
@@ -1095,19 +1288,26 @@
             }
 
             if (isValid) {
+                // Save to LocalStorage
+                const newGuest = {
+                    id: Date.now(),
+                    name: document.getElementById('visitorName').value,
+                    company: document.getElementById('company').value,
+                    phone: document.getElementById('phone').value,
+                    floor: document.getElementById('floor').value,
+                    type: document.getElementById('guestType').value,
+                    hosts: selectedEmployees.map(e => e.name).join(', '),
+                    photo: photoData,
+                    entryTime: new Date().toLocaleString(),
+                    exitTime: null
+                };
+
+                const guests = JSON.parse(localStorage.getItem('wiwynn_guests') || '[]');
+                guests.push(newGuest);
+                localStorage.setItem('wiwynn_guests', JSON.stringify(guests));
+
                 document.getElementById('successModal').style.display = 'flex';
             }
-        });
-
-        // Clear errors on interaction
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', function () {
-                const err = this.parentElement.querySelector('.error-msg');
-                if (err) err.style.display = 'none';
-            });
-        });
-        document.getElementById('ruleAgree').addEventListener('change', () => {
-            document.getElementById('ruleError').style.display = 'none';
         });
     </script>
 </body>

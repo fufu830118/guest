@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,10 +10,14 @@
     <script src="assets/libs/chart.min.js"></script>
     <style>
         :root {
-            --primary-color: #00f2ff;
+            --primary-color: #4285F4;
+            /* Google Blue */
+            --google-red: #EA4335;
+            --google-yellow: #FBBC05;
+            --google-green: #34A853;
             --bg-dark: #0a0e27;
             --glass-bg: rgba(15, 25, 50, 0.7);
-            --glass-border: rgba(0, 242, 255, 0.2);
+            --glass-border: rgba(66, 133, 244, 0.3);
             --text-color: #e0f7ff;
         }
 
@@ -85,9 +90,17 @@
         }
 
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 255, 153, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 255, 153, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 255, 153, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 153, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 255, 153, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 153, 0);
+            }
         }
 
         .stats-grid {
@@ -188,17 +201,192 @@
             margin-bottom: 20px;
         }
 
-        @media (max-width: 768px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
+        .nav-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50px;
+            padding: 4px;
+            border: 1px solid var(--glass-border);
+        }
 
-            .chart-card.full-width {
-                grid-column: 1;
-            }
+        .nav-tab {
+            padding: 8px 24px;
+            border-radius: 50px;
+            border: none;
+            background: transparent;
+            color: #8aa;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .nav-tab.active {
+            background: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
+        }
+
+        .btn-settings {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            padding: 8px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-settings:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
+        }
+
+        .guest-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            color: var(--text-color);
+        }
+
+        .guest-table th,
+        .guest-table td {
+            padding: 16px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .guest-table th:first-child,
+        .guest-table td:first-child {
+            text-align: left;
+            padding-left: 24px;
+        }
+
+        .guest-table th {
+            color: #8aa;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .guest-table tbody tr {
+            background: rgba(255, 255, 255, 0.03);
+            transition: background 0.2s;
+        }
+
+        .guest-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .guest-table td:first-child {
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+
+        .guest-table td:last-child {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-in {
+            background: rgba(52, 168, 83, 0.2);
+            color: var(--google-green);
+            border: 1px solid var(--google-green);
+        }
+
+        .status-out {
+            background: rgba(255, 255, 255, 0.1);
+            color: #8aa;
+            border: 1px solid #8aa;
+        }
+
+        .btn-signout {
+            background: rgba(234, 67, 53, 0.15);
+            color: var(--google-red);
+            border: 1px solid var(--google-red);
+            padding: 6px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .btn-signout:hover {
+            background: var(--google-red);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(234, 67, 53, 0.4);
+        }
+
+        /* Modal Styles Reuse */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #101025;
+            border: 1px solid var(--primary-color);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #8aa;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: rgba(66, 133, 244, 0.1);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(66, 133, 244, 0.1);
+            border-radius: 50px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(66, 133, 244, 0.4);
         }
     </style>
 </head>
+
 <body>
     <div id="canvas-container"></div>
 
@@ -208,83 +396,141 @@
                 <h1>緯穎訪客數據分析</h1>
                 <p>即時安全監控與訪問管理</p>
             </div>
-            <div class="live-indicator">
-                <div class="dot"></div>
-                系統運行中
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <div class="nav-tabs">
+                    <button class="nav-tab active" onclick="switchTab('overview')">總覽</button>
+                    <button class="nav-tab" onclick="switchTab('guestList')">訪客名單</button>
+                </div>
+                <button class="btn-settings" onclick="openSettings()">⚙️ 設定</button>
+                <div class="live-indicator">
+                    <div class="dot"></div>
+                    系統運行中
+                </div>
             </div>
         </div>
 
-        <!-- Key Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">今日訪客</div>
-                <div class="stat-value" id="stat-visitors">0</div>
-                <div class="stat-change" id="visitors-change" style="color: #00ff99;">▲ 12% 較昨日</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">目前在場人數</div>
-                <div class="stat-value" id="stat-onsite">0</div>
-                <div class="stat-change" style="color: #8aa;">容量: <span id="capacity">0</span>%</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">平均訪問時長</div>
-                <div class="stat-value"><span id="avg-duration">1.5</span><span style="font-size: 1rem;">h</span></div>
-                <div class="stat-change" style="color: #00ff99;">▲ 8% 效率提升</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">安全警報</div>
-                <div class="stat-value" style="color: #ff3366;" id="stat-alerts">0</div>
-                <div class="stat-change" style="color: #00ff99;">系統正常</div>
-            </div>
-        </div>
+        <!-- Overview Tab -->
+        <div id="tab-overview">
 
-        <!-- Charts -->
-        <div class="charts-grid">
-            <!-- Traffic Line Chart -->
-            <div class="chart-card">
-                <div class="chart-title">訪客流量 (24小時)</div>
-                <div class="chart-container">
-                    <canvas id="trafficChart"></canvas>
+            <!-- Key Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">今日訪客</div>
+                    <div class="stat-value" id="stat-visitors">0</div>
+                    <div class="stat-change" id="visitors-change" style="color: #00ff99;">▲ 12% 較昨日</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">目前在場人數</div>
+                    <div class="stat-value" id="stat-onsite">0</div>
+                    <div class="stat-change" style="color: #8aa;">容量: <span id="capacity">0</span>%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">平均訪問時長</div>
+                    <div class="stat-value"><span id="avg-duration">1.5</span><span style="font-size: 1rem;">h</span>
+                    </div>
+                    <div class="stat-change" style="color: #00ff99;">▲ 8% 效率提升</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">安全警報</div>
+                    <div class="stat-value" style="color: #ff3366;" id="stat-alerts">0</div>
+                    <div class="stat-change" style="color: #00ff99;">系統正常</div>
                 </div>
             </div>
 
-            <!-- Department 3D Bar Chart -->
-            <div class="chart-card">
-                <div class="chart-title">各部門訪問量 (3D)</div>
-                <div class="chart-container">
-                    <canvas id="deptChart"></canvas>
+            <!-- Charts -->
+            <div class="charts-grid">
+                <!-- Traffic Line Chart -->
+                <div class="chart-card">
+                    <div class="chart-title">訪客流量 (24小時)</div>
+                    <div class="chart-container">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Department 3D Bar Chart -->
+                <div class="chart-card">
+                    <div class="chart-title">各部門訪問量 (3D)</div>
+                    <div class="chart-container">
+                        <canvas id="deptChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Visitor Type Distribution -->
+                <div class="chart-card">
+                    <div class="chart-title">訪客類型分布</div>
+                    <div class="chart-container">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Peak Hours Radar -->
+                <div class="chart-card">
+                    <div class="chart-title">高峰時段分析</div>
+                    <div class="chart-container">
+                        <canvas id="peakHoursChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Weekly Trend -->
+                <div class="chart-card full-width">
+                    <div class="chart-title">每週訪客趨勢</div>
+                    <div class="chart-container tall">
+                        <canvas id="weeklyTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Purpose Breakdown -->
+                <div class="chart-card">
+                    <div class="chart-title">訪問目的分析</div>
+                    <div class="chart-container">
+                        <canvas id="purposeChart"></canvas>
+                    </div>
                 </div>
             </div>
+        </div> <!-- End of tab-overview -->
 
-            <!-- Visitor Type Distribution -->
-            <div class="chart-card">
-                <div class="chart-title">訪客類型分布</div>
-                <div class="chart-container">
-                    <canvas id="typeChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Peak Hours Radar -->
-            <div class="chart-card">
-                <div class="chart-title">高峰時段分析</div>
-                <div class="chart-container">
-                    <canvas id="peakHoursChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Weekly Trend -->
+        <!-- Guest List Tab -->
+        <div id="tab-guestList" style="display: none;">
             <div class="chart-card full-width">
-                <div class="chart-title">每週訪客趨勢</div>
-                <div class="chart-container tall">
-                    <canvas id="weeklyTrendChart"></canvas>
+                <div class="chart-title">今日訪客名單</div>
+                <div style="overflow-x: auto;">
+                    <table class="guest-table">
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th>類型</th>
+                                <th>公司</th>
+                                <th>樓層</th>
+                                <th>拜訪對象</th>
+                                <th>入場時間</th>
+                                <th>離場時間</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="guestTableBody">
+                            <!-- JS Injected -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
 
-            <!-- Purpose Breakdown -->
-            <div class="chart-card">
-                <div class="chart-title">訪問目的分析</div>
-                <div class="chart-container">
-                    <canvas id="purposeChart"></canvas>
+        <!-- Settings Modal -->
+        <div class="modal" id="settingsModal">
+            <div class="modal-content">
+                <h2 style="color: #fff; margin-bottom: 20px;">系統設定</h2>
+                <div class="form-group" style="text-align: left;">
+                    <label class="form-label">每日報表發送時間</label>
+                    <input type="time" id="reportTime" class="form-input" value="18:00">
+                    <p style="font-size: 0.85rem; color: #8aa; margin-top: 5px;">
+                        系統將於此時間檢查未簽退訪客，並模擬發送通知給受訪者。
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px;">
+                    <button class="btn-primary" onclick="saveSettings()"
+                        style="padding: 10px 30px; cursor: pointer;">儲存設定</button>
+                    <button class="btn-primary" onclick="closeSettings()"
+                        style="padding: 10px 30px; background: transparent; cursor: pointer;">取消</button>
                 </div>
             </div>
         </div>
@@ -798,11 +1044,189 @@
                 document.getElementById('avg-duration').textContent = newData.avgDuration;
 
                 console.log('📊 儀表板數據已更新於 ' + new Date().toLocaleTimeString());
+
+                // Also refresh guest list if active
+                if (document.getElementById('tab-guestList').style.display !== 'none') {
+                    renderGuestList();
+                }
+
+                checkDailyReport();
             }, 30000);
+
+            // Initial render
+            generateMockGuests(); // Generate 30 mock guests
+            renderGuestList();
+
+            // Check report time every minute
+            setInterval(checkDailyReport, 60000);
         };
+
+        // ========== New Features Logic ==========
+
+        // 0. Mock Data Generator for Guest List
+        function generateMockGuests() {
+            // Only generate if empty
+            const existing = JSON.parse(localStorage.getItem('wiwynn_guests') || '[]');
+            if (existing.length > 0) return;
+
+            const mockNames = ['John Doe', 'Jane Smith', 'Alice Johnson', 'Bob Brown', 'Charlie Davis', 'David Wilson', 'Eva Martinez', 'Frank Thomas', 'Grace Lee', 'Henry White'];
+            const mockCompanies = ['Google', 'Microsoft', 'Apple', 'Amazon', 'Meta', 'Intel', 'Nvidia', 'AMD', 'Dell', 'HP'];
+            const mockHosts = ['Alan Chen', 'Bob Lin', 'Debbie Wu', 'Max Wang', 'Demi Liu'];
+            const mockFloors = ['A23', 'C26', 'C7', 'C8'];
+
+            const newGuests = [];
+            for (let i = 0; i < 30; i++) {
+                const isOut = Math.random() > 0.5;
+                const entryHour = Math.floor(Math.random() * 9) + 8; // 8am - 5pm
+                const entryMin = Math.floor(Math.random() * 60);
+                const entryTime = new Date();
+                entryTime.setHours(entryHour, entryMin, 0);
+
+                let exitTime = null;
+                if (isOut) {
+                    const exitHour = entryHour + Math.floor(Math.random() * 4) + 1;
+                    const exitMin = Math.floor(Math.random() * 60);
+                    const exitDate = new Date(entryTime);
+                    exitDate.setHours(exitHour, exitMin, 0);
+                    exitTime = exitDate.toLocaleString();
+                }
+
+                newGuests.push({
+                    id: Date.now() + i,
+                    name: mockNames[Math.floor(Math.random() * mockNames.length)] + ' ' + (i + 1),
+                    company: mockCompanies[Math.floor(Math.random() * mockCompanies.length)],
+                    phone: '09' + Math.floor(Math.random() * 100000000).toString().padStart(8, '0'),
+                    floor: mockFloors[Math.floor(Math.random() * mockFloors.length)],
+                    type: Math.random() > 0.3 ? 'Interviewer' : 'VIP',
+                    hosts: mockHosts[Math.floor(Math.random() * mockHosts.length)],
+                    photo: null,
+                    entryTime: entryTime.toLocaleString(),
+                    exitTime: exitTime
+                });
+            }
+
+            localStorage.setItem('wiwynn_guests', JSON.stringify(newGuests));
+        }
+
+        // 1. Tab Switching
+        window.switchTab = function (tabName) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tabName === 'overview') {
+                document.getElementById('tab-overview').style.display = 'block';
+                document.getElementById('tab-guestList').style.display = 'none';
+            } else {
+                document.getElementById('tab-overview').style.display = 'none';
+                document.getElementById('tab-guestList').style.display = 'block';
+                renderGuestList();
+            }
+        };
+
+        // 2. Guest List Rendering
+        function renderGuestList() {
+            const guests = JSON.parse(localStorage.getItem('wiwynn_guests') || '[]');
+            const tbody = document.getElementById('guestTableBody');
+
+            if (guests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#8aa;">目前無訪客資料</td></tr>';
+                return;
+            }
+
+            // Sort by entry time desc
+            guests.sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
+
+            tbody.innerHTML = guests.map(g => {
+                const isOut = !!g.exitTime;
+                const statusHtml = isOut
+                    ? `<span class="status-badge status-out">已簽退</span>`
+                    : `<span class="status-badge status-in">訪問中</span>`;
+
+                const actionHtml = isOut
+                    ? `-`
+                    : `<button class="btn-signout" onclick="signOutGuest(${g.id})">簽退</button>`;
+
+                return `
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;">${g.name}</div>
+                            <div style="font-size:0.8rem; color:#8aa;">${g.phone}</div>
+                        </td>
+                        <td>${g.type === 'Interviewer' ? '面試者' : '貴賓'}</td>
+                        <td>${g.company}</td>
+                        <td>${g.floor}</td>
+                        <td>${g.hosts}</td>
+                        <td>${g.entryTime}</td>
+                        <td>${g.exitTime || '-'}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                ${statusHtml}
+                                ${actionHtml}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 3. Sign Out
+        window.signOutGuest = function (id) {
+            if (!confirm('確定要將此訪客簽退嗎？')) return;
+
+            const guests = JSON.parse(localStorage.getItem('wiwynn_guests') || '[]');
+            const idx = guests.findIndex(g => g.id === id);
+            if (idx > -1) {
+                guests[idx].exitTime = new Date().toLocaleString();
+                localStorage.setItem('wiwynn_guests', JSON.stringify(guests));
+                renderGuestList();
+            }
+        };
+
+        // 4. Settings Modal
+        window.openSettings = function () {
+            document.getElementById('settingsModal').style.display = 'flex';
+            const savedTime = localStorage.getItem('wiwynn_report_time') || '18:00';
+            document.getElementById('reportTime').value = savedTime;
+        };
+
+        window.closeSettings = function () {
+            document.getElementById('settingsModal').style.display = 'none';
+        };
+
+        window.saveSettings = function () {
+            const time = document.getElementById('reportTime').value;
+            localStorage.setItem('wiwynn_report_time', time);
+            alert('設定已儲存！');
+            closeSettings();
+        };
+
+        // 5. Daily Report Simulation
+        function checkDailyReport() {
+            const reportTime = localStorage.getItem('wiwynn_report_time') || '18:00';
+            const now = new Date();
+            const currentHourMin = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+            // Simple check: if current time matches report time (within this minute)
+            // In a real app, we'd have a flag to prevent multiple sends per day
+            // Here we just check if we haven't alerted today
+            const lastAlertDate = localStorage.getItem('wiwynn_last_alert_date');
+            const todayStr = now.toDateString();
+
+            if (currentHourMin === reportTime && lastAlertDate !== todayStr) {
+                const guests = JSON.parse(localStorage.getItem('wiwynn_guests') || '[]');
+                const activeGuests = guests.filter(g => !g.exitTime);
+
+                if (activeGuests.length > 0) {
+                    const names = activeGuests.map(g => g.name).join(', ');
+                    alert(`[系統模擬信件]\n\n時間已達 ${reportTime}。\n以下訪客尚未簽退：\n${names}\n\n已自動發送提醒信件給相關受訪者。`);
+                    localStorage.setItem('wiwynn_last_alert_date', todayStr);
+                }
+            }
+        }
 
         // Initialize when page loads
         window.addEventListener('DOMContentLoaded', initDashboard);
     </script>
 </body>
+
 </html>
