@@ -459,7 +459,7 @@
                 <span>後台管理</span>
             </a>
             <div class="logo-container">
-                <img src="Wiwynn_LOGO_with Chinese_Name_Blue_Green (2).png" alt="Wiwynn Logo">
+                <img src="assets/images/wiwynn-logo.png" alt="Wiwynn Logo">
             </div>
             <h1>訪客登記系統</h1>
         </div>
@@ -587,7 +587,7 @@
                 size: 0.4,
                 orbit: 6,
                 speed: 4.74,
-                texture: 'person-main/textures/2k_mercury.jpg',
+                texture: 'assets/textures/2k_mercury.jpg',
                 color: '#8C7853'
             },
             {
@@ -595,7 +595,7 @@
                 size: 0.8,
                 orbit: 9,
                 speed: 3.50,
-                texture: 'person-main/textures/2k_venus_surface.jpg',
+                texture: 'assets/textures/2k_venus_surface.jpg',
                 color: '#FFC649'
             },
             {
@@ -603,7 +603,7 @@
                 size: 0.9,
                 orbit: 12,
                 speed: 2.98,
-                texture: 'person-main/textures/2k_earth_daymap.jpg',
+                texture: 'assets/textures/2k_earth_daymap.jpg',
                 color: '#4A90E2'
             },
             {
@@ -611,7 +611,7 @@
                 size: 0.5,
                 orbit: 15,
                 speed: 2.41,
-                texture: 'person-main/textures/2k_mars.jpg',
+                texture: 'assets/textures/2k_mars.jpg',
                 color: '#E27B58'
             },
             {
@@ -619,7 +619,7 @@
                 size: 2.0,
                 orbit: 22,
                 speed: 1.31,
-                texture: 'person-main/textures/2k_jupiter.jpg',
+                texture: 'assets/textures/2k_jupiter.jpg',
                 color: '#C88B3A'
             },
             {
@@ -627,9 +627,9 @@
                 size: 1.8,
                 orbit: 28,
                 speed: 0.97,
-                texture: 'person-main/textures/2k_saturn.jpg',
+                texture: 'assets/textures/2k_saturn.jpg',
                 ring: {
-                    texture: 'person-main/textures/2k_saturn_ring_alpha.png'
+                    texture: 'assets/textures/2k_saturn_ring_alpha.png'
                 },
                 color: '#FAD5A5'
             },
@@ -638,7 +638,7 @@
                 size: 1.2,
                 orbit: 34,
                 speed: 0.68,
-                texture: 'person-main/textures/2k_uranus.jpg',
+                texture: 'assets/textures/2k_uranus.jpg',
                 color: '#4FD0E7'
             },
             {
@@ -646,7 +646,7 @@
                 size: 1.2,
                 orbit: 39,
                 speed: 0.54,
-                texture: 'person-main/textures/2k_neptune.jpg',
+                texture: 'assets/textures/2k_neptune.jpg',
                 color: '#4166F5'
             },
             {
@@ -654,7 +654,7 @@
                 size: 0.3,
                 orbit: 44,
                 speed: 0.47,
-                texture: 'person-main/textures/2k_moon.jpg',
+                texture: 'assets/textures/2k_moon.jpg',
                 color: '#A0826D'
             }
         ];
@@ -754,7 +754,7 @@
             // Create Sun
             const sunGeometry = new THREE.SphereGeometry(3, 64, 64);
             const sunTextureLoader = new THREE.TextureLoader();
-            const sunTexture = sunTextureLoader.load('person-main/textures/2k_sun.jpg');
+            const sunTexture = sunTextureLoader.load('assets/textures/2k_sun.jpg');
 
             const sunMaterial = new THREE.MeshBasicMaterial({
                 map: sunTexture,
