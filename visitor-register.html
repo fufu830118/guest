@@ -60,6 +60,13 @@
             background: radial-gradient(circle at center, #1a1a3a 0%, #000 100%);
             opacity: 0.7;
             cursor: grab;
+            display: block;
+            visibility: visible;
+        }
+
+        #canvas-container canvas {
+            width: 100% !important;
+            height: 100% !important;
         }
 
         #canvas-container.grabbing {
@@ -442,9 +449,13 @@
             #canvas-container {
                 pointer-events: none;
                 cursor: default;
-                position: fixed;
-                transform: none;
-                will-change: auto;
+            }
+
+            /* 確保 canvas 元素可以顯示 */
+            #canvas-container canvas {
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
             }
 
             /* 確保簽名區域可以正常觸控 */
@@ -880,15 +891,16 @@
         }
 
         let lastRenderTime = 0;
-        const renderInterval = window.innerWidth <= 768 ? 1000 / 30 : 1000 / 60; // 手機 30fps, 桌面 60fps
+        const isMobileDevice = window.innerWidth <= 768;
+        const renderInterval = isMobileDevice ? 1000 / 30 : 1000 / 60; // 手機 30fps, 桌面 60fps
 
         function animate() {
             requestAnimationFrame(animate);
 
             const currentTime = Date.now();
 
-            // 手機版降低渲染頻率，減少性能消耗
-            if (currentTime - lastRenderTime < renderInterval) {
+            // 手機版降低渲染頻率，減少性能消耗（但確保第一次一定渲染）
+            if (lastRenderTime > 0 && currentTime - lastRenderTime < renderInterval) {
                 return;
             }
             lastRenderTime = currentTime;
