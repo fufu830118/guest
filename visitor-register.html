@@ -869,17 +869,31 @@
                 }
             });
 
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
+            // 桌面版才監聽 resize（手機版固定尺寸避免觸發重繪）
+            if (window.innerWidth > 768) {
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
         }
+
+        let lastRenderTime = 0;
+        const renderInterval = window.innerWidth <= 768 ? 1000 / 30 : 1000 / 60; // 手機 30fps, 桌面 60fps
 
         function animate() {
             requestAnimationFrame(animate);
 
-            const time = Date.now() * 0.0001;
+            const currentTime = Date.now();
+
+            // 手機版降低渲染頻率，減少性能消耗
+            if (currentTime - lastRenderTime < renderInterval) {
+                return;
+            }
+            lastRenderTime = currentTime;
+
+            const time = currentTime * 0.0001;
 
             // Star twinkling
             if (particles) {
@@ -1000,19 +1014,51 @@
         const canvas = document.getElementById('signaturePad');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
+        let signatureImageData = null;
 
         function resizeCanvas() {
+            // 保存當前簽名內容
+            if (hasSignature && canvas.width > 0 && canvas.height > 0) {
+                try {
+                    signatureImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                } catch (e) {
+                    signatureImageData = null;
+                }
+            }
+
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const oldWidth = canvas.width;
+            const oldHeight = canvas.height;
             canvas.width = canvas.offsetWidth * ratio;
             canvas.height = canvas.offsetHeight * ratio;
             ctx.scale(ratio, ratio);
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.lineCap = 'round';
+
+            // 恢復簽名內容
+            if (signatureImageData && oldWidth === canvas.width && oldHeight === canvas.height) {
+                try {
+                    ctx.putImageData(signatureImageData, 0, 0);
+                } catch (e) {
+                    // 恢復失敗，忽略
+                }
+            }
         }
 
         setTimeout(resizeCanvas, 100);
-        window.addEventListener('resize', resizeCanvas);
+
+        // 檢測是否為手機裝置
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+
+        // 桌面版才監聽 resize（手機版避免簽名被清空）
+        if (!isMobile) {
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(resizeCanvas, 200);
+            });
+        }
 
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
