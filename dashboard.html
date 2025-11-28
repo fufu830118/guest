@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wiwynn Visitor Analytics - Real-time Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="three.min.js"></script>
-    <script src="chart.min.js"></script>
+    <script src="assets/libs/three.min.js"></script>
+    <script src="assets/libs/chart.min.js"></script>
     <style>
         :root {
             --primary-color: #00f2ff;
@@ -469,7 +469,7 @@
                 const container = document.querySelector('.dashboard-container');
                 const errorMsg = document.createElement('div');
                 errorMsg.className = 'error-msg';
-                errorMsg.innerHTML = '<h2>❌ Error: Chart.js failed to load</h2><p>Please check chart.min.js file path</p>';
+                errorMsg.innerHTML = '<h2>❌ Error: Chart.js failed to load</h2><p>Please check assets/libs/chart.min.js file path</p>';
                 container.prepend(errorMsg);
                 return;
             }
