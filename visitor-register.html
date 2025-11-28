@@ -44,10 +44,10 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             padding: 20px;
-            overscroll-behavior: none;
             overflow-x: hidden;
+            overflow-y: auto;
         }
 
         #canvas-container {
@@ -133,6 +133,8 @@
             margin-bottom: 32px;
             opacity: 0;
             animation: fadeIn 0.5s ease-out forwards;
+            position: relative;
+            z-index: 15;
         }
 
         .form-section:nth-child(1) {
@@ -276,6 +278,8 @@
             border-radius: 12px;
             touch-action: none;
             cursor: crosshair;
+            position: relative;
+            z-index: 20;
         }
 
         .employee-list {
@@ -415,6 +419,23 @@
 
             .logo-container img {
                 max-width: 200px;
+            }
+
+            /* 手機版本：太陽系背景不接收觸控事件，避免干擾滾動 */
+            #canvas-container {
+                pointer-events: none;
+                cursor: default;
+            }
+
+            /* 確保表單可以正常滾動 */
+            body {
+                align-items: flex-start;
+                padding: 10px;
+            }
+
+            .container {
+                margin-top: 20px;
+                margin-bottom: 20px;
             }
         }
     </style>
