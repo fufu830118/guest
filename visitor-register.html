@@ -79,6 +79,9 @@
             animation: slideUp 0.6s ease-out;
             position: relative;
             z-index: 10;
+        }
+
+        .container * {
             pointer-events: auto;
         }
 
@@ -278,6 +281,12 @@
             box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
         }
 
+        .signature-wrapper {
+            position: relative;
+            z-index: 25;
+            isolation: isolate;
+        }
+
         .signature-pad {
             width: 100%;
             height: 200px;
@@ -286,7 +295,8 @@
             touch-action: none;
             cursor: crosshair;
             position: relative;
-            z-index: 20;
+            z-index: 30;
+            pointer-events: auto;
         }
 
         .employee-list {
@@ -432,6 +442,18 @@
             #canvas-container {
                 pointer-events: none;
                 cursor: default;
+                position: fixed;
+                transform: none;
+                will-change: auto;
+            }
+
+            /* 確保簽名區域可以正常觸控 */
+            .signature-pad,
+            .signature-pad *,
+            .form-input,
+            .btn,
+            .employee-item {
+                pointer-events: auto;
             }
 
             /* 確保表單可以正常滾動 */
@@ -521,7 +543,7 @@
             <!-- 4. Signature -->
             <div class="form-section">
                 <div class="section-title">電子簽名</div>
-                <div style="position: relative;">
+                <div class="signature-wrapper">
                     <canvas id="signaturePad" class="signature-pad"></canvas>
                     <button type="button" id="clearSignature"
                         style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">清除</button>
